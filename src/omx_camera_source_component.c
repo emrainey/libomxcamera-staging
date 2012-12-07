@@ -111,6 +111,9 @@ static OMX_U32 noCameraSrcInstance=0;
                                                                                    (_queue_).qTimeStampQueue[(_bufindex_)] = (OMX_TICKS)(_timestamp_); \
                                                                                } while (0)
 
+#ifndef dimof
+#define dimof(x) (sizeof(x)/sizeof(x[0]))
+#endif
 
 typedef struct CAM_SENSOR_OMXV4LCOLORTYPE
 {
@@ -260,7 +263,7 @@ static OMX_ERRORTYPE camera_HandleThumbnailCapture(omx_camera_source_component_P
 static OMX_ERRORTYPE camera_CheckSupportedColorFormat(OMX_COLOR_FORMATTYPE eColorFormat) {
   OMX_U32 i;
 
-  for (i = 0; i < sizeof(g_SupportedColorTable)/sizeof(g_SupportedColorTable[0]); i++)
+  for (i = 0; i < dimof(g_SupportedColorTable); i++)
   {
     if (eColorFormat == g_SupportedColorTable[i].eOmxColorFormat)
     {
@@ -279,7 +282,7 @@ static OMX_ERRORTYPE camera_CheckSupportedFramesize(
   OMX_U32 nFrameHeight) {
   OMX_U32 i;
 
-  for (i = 0; i < sizeof(g_SupportedFramesizeTable)/sizeof(g_SupportedFramesizeTable[0]); i++)
+  for (i = 0; i < dimof(g_SupportedFramesizeTable); i++)
   {
     if (nFrameWidth == g_SupportedFramesizeTable[i].nWidth &&
          nFrameHeight == g_SupportedFramesizeTable[i].nHeight)
@@ -298,7 +301,7 @@ static OMX_ERRORTYPE camera_MapColorFormatOmxToV4l(
   V4L2_COLOR_FORMATTYPE* pV4lColorFormat ) {
   OMX_U32 i;
 
-  for (i = 0; i < sizeof(g_SupportedColorTable)/sizeof(g_SupportedColorTable[0]); i++) {
+  for (i = 0; i < dimof(g_SupportedFramesizeTable); i++) {
     if (eOmxColorFormat == g_SupportedColorTable[i].eOmxColorFormat) {
       (*pV4lColorFormat) = g_SupportedColorTable[i].sV4lColorFormat;
       return OMX_ErrorNone;
@@ -315,7 +318,7 @@ static OMX_ERRORTYPE camera_MapColorFormatV4lToOmx(
   OMX_COLOR_FORMATTYPE* pOmxColorFormat ) {
   OMX_U32 i;
 
-  for (i = 0; i < sizeof(g_SupportedColorTable)/sizeof(g_SupportedColorTable[0]); i++) {
+  for (i = 0; i < dimof(g_SupportedFramesizeTable); i++) {
     if (pV4lColorFormat->v4l2Pixfmt == g_SupportedColorTable[i].sV4lColorFormat.v4l2Pixfmt &&
         pV4lColorFormat->v4l2Depth == g_SupportedColorTable[i].sV4lColorFormat.v4l2Depth) {
       (*pOmxColorFormat) = g_SupportedColorTable[i].eOmxColorFormat;
@@ -334,7 +337,7 @@ static OMX_U32 camera_CalculateBufferSize(
   OMX_COLOR_FORMATTYPE eOmxColorFormat) {
   OMX_U32 i;
 
-  for (i = 0; i < sizeof(g_SupportedColorTable)/sizeof(g_SupportedColorTable[0]); i++) {
+  for (i = 0; i < dimof(g_SupportedFramesizeTable); i++) {
     if (eOmxColorFormat == g_SupportedColorTable[i].eOmxColorFormat) {
       return (nWidth * nHeight * g_SupportedColorTable[i].sV4lColorFormat.v4l2Depth + 7) / 8;
     }
@@ -557,9 +560,9 @@ static OMX_ERRORTYPE camera_DeinitCameraDevice(omx_camera_source_component_Priva
 
   if(omx_camera_source_component_Private->sMapbufQueue.buffers != NULL ) {
     for (i = 0; i < OMX_MAPBUFQUEUE_GETMAXLEN( omx_camera_source_component_Private->sMapbufQueue ); ++i) {
-      DEBUG(DEB_LEV_PARAMS, "i=%d,addr=%x,length=%d\n",(int)i,
-        (int)omx_camera_source_component_Private->sMapbufQueue.buffers[i].pCapAddrStart,
-        (int)omx_camera_source_component_Private->sMapbufQueue.buffers[i].length);
+      DEBUG(DEB_LEV_PARAMS, "i=%u,addr=%p,length=%u\n",i,
+        omx_camera_source_component_Private->sMapbufQueue.buffers[i].pCapAddrStart,
+        omx_camera_source_component_Private->sMapbufQueue.buffers[i].length);
 
       if (-1 == munmap(omx_camera_source_component_Private->sMapbufQueue.buffers[i].pCapAddrStart,
                        omx_camera_source_component_Private->sMapbufQueue.buffers[i].length)) {
@@ -717,7 +720,7 @@ OMX_ERRORTYPE omx_camera_source_component_Constructor(OMX_COMPONENTTYPE *openmax
       return OMX_ErrorInsufficientResources;
     }
   } else {
-    DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %x Already Allocated\n", __func__, (int)openmaxStandComp->pComponentPrivate);
+    DEBUG(DEB_LEV_FUNCTION_NAME, "In %s, Error Component %p Already Allocated\n", __func__, openmaxStandComp->pComponentPrivate);
   }
 
   /* Call base source constructor */
@@ -873,7 +876,7 @@ static OMX_ERRORTYPE omx_camera_source_component_DoStateSet(OMX_COMPONENTTYPE *o
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s for camera component\n",__func__);
 
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "%s: Before base DoStateSet: destinationState=%ld,omx_camera_source_component_Private->state=%d,omx_camera_source_component_Private->transientState=%d\n", __func__,destinationState,omx_camera_source_component_Private->state,omx_camera_source_component_Private->transientState);
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "%s: Before base DoStateSet: destinationState=%u,omx_camera_source_component_Private->state=%d,omx_camera_source_component_Private->transientState=%d\n", __func__,destinationState,omx_camera_source_component_Private->state,omx_camera_source_component_Private->transientState);
 
   if (omx_camera_source_component_Private->state == OMX_StateLoaded && destinationState == OMX_StateIdle) {
     /* Loaded --> Idle */
@@ -919,7 +922,7 @@ static OMX_ERRORTYPE omx_camera_source_component_DoStateSet(OMX_COMPONENTTYPE *o
 
   omx_camera_source_component_Private->eLastState = omx_camera_source_component_Private->state;
   err = omx_base_component_DoStateSet(openmaxStandComp, destinationState);
-  DEBUG(DEB_LEV_SIMPLE_SEQ, "%s: After base DoStateSet: destinationState=%ld,omx_camera_source_component_Private->state=%d,omx_camera_source_component_Private->transientState=%d\n", __func__,destinationState,omx_camera_source_component_Private->state,omx_camera_source_component_Private->transientState);
+  DEBUG(DEB_LEV_SIMPLE_SEQ, "%s: After base DoStateSet: destinationState=%u,omx_camera_source_component_Private->state=%d,omx_camera_source_component_Private->transientState=%d\n", __func__,destinationState,omx_camera_source_component_Private->state,omx_camera_source_component_Private->transientState);
 
   if (omx_camera_source_component_Private->eLastState == OMX_StateIdle && omx_camera_source_component_Private->state == OMX_StateExecuting) {
     /* Idle --> Exec */
@@ -989,7 +992,7 @@ static OMX_ERRORTYPE omx_camera_source_component_GetParameter(
       }
       memcpy(ComponentParameterStructure,&omx_camera_source_component_Private->sPortTypesParam[OMX_PortDomainVideo],sizeof(OMX_PORT_PARAM_TYPE));
       break;
-
+    // asking for the formats each port supports
     case OMX_IndexParamVideoPortFormat:
       pVideoPortFormat = (OMX_VIDEO_PARAM_PORTFORMATTYPE *)ComponentParameterStructure;
       if ((err = checkHeader(ComponentParameterStructure, sizeof(OMX_VIDEO_PARAM_PORTFORMATTYPE))) != OMX_ErrorNone) {
@@ -998,9 +1001,15 @@ static OMX_ERRORTYPE omx_camera_source_component_GetParameter(
       }
       if (pVideoPortFormat->nPortIndex < NUM_CAMERAPORTS)
       {
-        pPort = (omx_camera_source_component_PortType *) omx_camera_source_component_Private->ports[pVideoPortFormat->nPortIndex];
-        pVideoPortFormat->eCompressionFormat = pPort->sPortParam.format.video.eCompressionFormat;
-        pVideoPortFormat->eColorFormat = pPort->sPortParam.format.video.eColorFormat;
+        if (pVideoPortFormat->nIndex < dimof(g_SupportedColorTable))
+        {
+          pPort = (omx_camera_source_component_PortType *) omx_camera_source_component_Private->ports[pVideoPortFormat->nPortIndex];
+          pVideoPortFormat->eCompressionFormat = pPort->sPortParam.format.video.eCompressionFormat;
+          pVideoPortFormat->eColorFormat = g_SupportedColorTable[pVideoPortFormat->nIndex].eOmxColorFormat;
+          pVideoPortFormat->xFramerate = pPort->sPortParam.format.video.xFramerate;
+        }
+        else
+          err = OMX_ErrorNoMore;
       }
       else
       {
@@ -1296,8 +1305,8 @@ static void* omx_camera_source_component_BufferMgmtFunction (void* param) {
 
       DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond PrevewSemVal=%d,CaptureSemval=%d, ThumbnailSemval=%d\n",
         __func__,pPreviewBufSem->semval,pCaptureBufSem->semval, pThumbnailBufSem->semval);
-      DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond pPreviewBuffer=0x%lX,pCaptureBuffer=0x%lX, pThumbnailBuffer=0x%lX\n",
-        __func__,(OMX_U32)pPreviewBuffer,(OMX_U32)pCaptureBuffer, (OMX_U32)pThumbnailBuffer);
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s 1 signalling flush all cond pPreviewBuffer=%p,pCaptureBuffer=%p, pThumbnailBuffer=%p\n",
+        __func__,pPreviewBuffer, pCaptureBuffer, pThumbnailBuffer);
 
       if(pPreviewBuffer!=NULL && PORT_IS_BEING_FLUSHED(pPreviewPort)) {
         pPreviewPort->ReturnBufferFunction((omx_base_PortType *)pPreviewPort,pPreviewBuffer);
@@ -1319,8 +1328,8 @@ static void* omx_camera_source_component_BufferMgmtFunction (void* param) {
 
       DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond PrevewSemVal=%d,CaptureSemval=%d, ThumbnailSemval=%d\n",
         __func__,pPreviewBufSem->semval,pCaptureBufSem->semval, pThumbnailBufSem->semval);
-      DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond pPreviewBuffer=0x%lX,pCaptureBuffer=0x%lX, pThumbnailBuffer=0x%lX\n",
-        __func__,(OMX_U32)pPreviewBuffer,(OMX_U32)pCaptureBuffer, (OMX_U32)pThumbnailBuffer);
+      DEBUG(DEB_LEV_FULL_SEQ, "In %s 2 signalling flush all cond pPreviewBuffer=%p,pCaptureBuffer=%p, pThumbnailBuffer=%p\n",
+        __func__, pPreviewBuffer, pCaptureBuffer, pThumbnailBuffer);
 
       tsem_up(omx_camera_source_component_Private->flush_all_condition);
       tsem_down(omx_camera_source_component_Private->flush_condition);
@@ -1396,12 +1405,12 @@ static OMX_ERRORTYPE camera_HandleThreadBufferCapture(omx_camera_source_componen
 
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s for camera component\n",__func__);
 
-  DEBUG(DEB_LEV_FULL_SEQ, "%s: mapbuf queue index [last, wait, capture] = [%ld, %ld, %ld]\n", __func__,
+  DEBUG(DEB_LEV_FULL_SEQ, "%s: mapbuf queue index [last, wait, capture] = [%u, %u, %u]\n", __func__,
               omx_camera_source_component_Private->sMapbufQueue.nLastBufIndex,
               omx_camera_source_component_Private->sMapbufQueue.nNextWaitIndex,
               omx_camera_source_component_Private->sMapbufQueue.nNextCaptureIndex );
 
-  DEBUG(DEB_LEV_FULL_SEQ, "%s: mapbuf queue count [captured, total] = [%ld, %ld]\n", __func__,
+  DEBUG(DEB_LEV_FULL_SEQ, "%s: mapbuf queue count [captured, total] = [%u, %u]\n", __func__,
               omx_camera_source_component_Private->sMapbufQueue.nBufCountCaptured,
               omx_camera_source_component_Private->sMapbufQueue.nBufCountTotal );
 
@@ -1446,14 +1455,14 @@ static OMX_ERRORTYPE camera_HandleThreadBufferCapture(omx_camera_source_componen
   nTimeToWaitInMilliSec = (OMX_S32) (omx_camera_source_component_Private->nFrameIntervalInMilliSec -
                 (nCurTimeInMilliSec - omx_camera_source_component_Private->nLastCaptureTimeInMilliSec));
 
-  DEBUG(DEB_LEV_FULL_SEQ, "%s: [current time, last capture time, time to wait]=[%lu, %lu, %ld]\n", __func__,
+  DEBUG(DEB_LEV_FULL_SEQ, "%s: [current time, last capture time, time to wait]=[%u, %u, %u]\n", __func__,
                 nCurTimeInMilliSec,omx_camera_source_component_Private->nLastCaptureTimeInMilliSec,nTimeToWaitInMilliSec);
 
   /* Wait some time according to frame rate */
   if ( nTimeToWaitInMilliSec > 0 ) {
     sleepTime.tv_sec = nTimeToWaitInMilliSec / 1000;
     sleepTime.tv_nsec = (nTimeToWaitInMilliSec % 1000) * 1000000;
-    DEBUG(DEB_LEV_FULL_SEQ, "%s: Actually wait for %ld msec\n", __func__,
+    DEBUG(DEB_LEV_FULL_SEQ, "%s: Actually wait for %u msec\n", __func__,
                 nTimeToWaitInMilliSec);
     nanosleep(&sleepTime, NULL);
   }
@@ -1468,7 +1477,7 @@ static OMX_ERRORTYPE camera_HandleThreadBufferCapture(omx_camera_source_componen
     camera_SendLastCapturedBuffer( omx_camera_source_component_Private );
     if ( OMX_MAPBUFQUEUE_ISFULL( omx_camera_source_component_Private->sMapbufQueue ) ) {
       /* If the mapbuf queue is still full, drop the last captured buffer */
-      DEBUG(DEB_LEV_FULL_SEQ, "%s: Drop buffer [%ld]\n", __func__,
+      DEBUG(DEB_LEV_FULL_SEQ, "%s: Drop buffer [%u]\n", __func__,
                 OMX_MAPBUFQUEUE_GETLASTBUFFER( omx_camera_source_component_Private->sMapbufQueue ));
       camera_DropLastCapturedBuffer( omx_camera_source_component_Private );
     }
@@ -1528,14 +1537,14 @@ static OMX_ERRORTYPE camera_SendCapturedBuffers(omx_camera_source_component_Priv
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s for camera component\n",__func__);
 
   for (nPortIndex = OMX_CAMPORT_INDEX_CP; nPortIndex >= OMX_CAMPORT_INDEX_VF; nPortIndex--) {
-    DEBUG(DEB_LEV_FULL_SEQ, "%s: try to send buffers to port [%ld]\n", __func__, nPortIndex);
+    DEBUG(DEB_LEV_FULL_SEQ, "%s: try to send buffers to port [%u]\n", __func__, nPortIndex);
     port = (omx_camera_source_component_PortType *) omx_camera_source_component_Private->ports[nPortIndex];
     if (PORT_IS_ENABLED(port) &&
          (omx_camera_source_component_Private->bCapturing || OMX_CAMPORT_INDEX_CP != nPortIndex)) {
       nBufferCountCur = port->pBufferSem->semval;
-      DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%ld] nBufferCountCur = %ld\n", __func__, nPortIndex, nBufferCountCur);
-      DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%ld] nIndexMapbufQueue = %ld\n", __func__, nPortIndex, port->nIndexMapbufQueue);
-      DEBUG(DEB_LEV_FULL_SEQ, "%s: Before returning buffers, mapbuf queue index [last, wait, capture] = [%ld, %ld, %ld]\n", __func__,
+      DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%u] nBufferCountCur = %u\n", __func__, nPortIndex, nBufferCountCur);
+      DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%u] nIndexMapbufQueue = %u\n", __func__, nPortIndex, port->nIndexMapbufQueue);
+      DEBUG(DEB_LEV_FULL_SEQ, "%s: Before returning buffers, mapbuf queue index [last, wait, capture] = [%u, %u, %u]\n", __func__,
                   omx_camera_source_component_Private->sMapbufQueue.nLastBufIndex,
                   omx_camera_source_component_Private->sMapbufQueue.nNextWaitIndex,
                   omx_camera_source_component_Private->sMapbufQueue.nNextCaptureIndex );
@@ -1547,7 +1556,7 @@ static OMX_ERRORTYPE camera_SendCapturedBuffers(omx_camera_source_component_Priv
                   )
                 )
               ) {
-        DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%ld] nBufferCountCur = %ld\n", __func__, nPortIndex, nBufferCountCur);
+        DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%u] nBufferCountCur = %u\n", __func__, nPortIndex, nBufferCountCur);
         camera_ProcessPortOneBuffer( omx_camera_source_component_Private, (OMX_U32) nPortIndex );
 
         port->nIndexMapbufQueue = OMX_MAPBUFQUEUE_GETNEXTINDEX( omx_camera_source_component_Private->sMapbufQueue,
@@ -1559,7 +1568,7 @@ static OMX_ERRORTYPE camera_SendCapturedBuffers(omx_camera_source_component_Priv
 
   err = camera_UpdateCapturedBufferQueue( omx_camera_source_component_Private );
 
-  DEBUG(DEB_LEV_FULL_SEQ, "%s: After returning buffers, mapbuf queue index [last, wait, capture] = [%ld, %ld, %ld]\n", __func__,
+  DEBUG(DEB_LEV_FULL_SEQ, "%s: After returning buffers, mapbuf queue index [last, wait, capture] = [%u, %u, %u]\n", __func__,
               omx_camera_source_component_Private->sMapbufQueue.nLastBufIndex,
               omx_camera_source_component_Private->sMapbufQueue.nNextWaitIndex,
               omx_camera_source_component_Private->sMapbufQueue.nNextCaptureIndex );
@@ -1580,21 +1589,21 @@ static OMX_ERRORTYPE camera_SendLastCapturedBuffer(omx_camera_source_component_P
   DEBUG(DEB_LEV_FUNCTION_NAME, "In %s for camera component\n",__func__);
 
   for (nPortIndex = OMX_CAMPORT_INDEX_CP; nPortIndex >= OMX_CAMPORT_INDEX_VF; nPortIndex--) {
-    DEBUG(DEB_LEV_FULL_SEQ, "%s: try to send buffers to port [%ld]\n", __func__, nPortIndex);
+    DEBUG(DEB_LEV_FULL_SEQ, "%s: try to send buffers to port [%u]\n", __func__, nPortIndex);
     port = (omx_camera_source_component_PortType *) omx_camera_source_component_Private->ports[nPortIndex];
     if (PORT_IS_ENABLED(port) &&
          (omx_camera_source_component_Private->bCapturing || OMX_CAMPORT_INDEX_CP != nPortIndex)) {
       nBufferCountCur = port->pBufferSem->semval;
-      DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%ld] nBufferCountCur = %ld\n", __func__, nPortIndex, nBufferCountCur);
-      DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%ld] nIndexMapbufQueue = %ld\n", __func__, nPortIndex, port->nIndexMapbufQueue);
-      DEBUG(DEB_LEV_FULL_SEQ, "%s: Before returning buffers, mapbuf queue index [last, wait, capture] = [%ld, %ld, %ld]\n", __func__,
+      DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%u] nBufferCountCur = %u\n", __func__, nPortIndex, nBufferCountCur);
+      DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%u] nIndexMapbufQueue = %u\n", __func__, nPortIndex, port->nIndexMapbufQueue);
+      DEBUG(DEB_LEV_FULL_SEQ, "%s: Before returning buffers, mapbuf queue index [last, wait, capture] = [%u, %u, %u]\n", __func__,
                   omx_camera_source_component_Private->sMapbufQueue.nLastBufIndex,
                   omx_camera_source_component_Private->sMapbufQueue.nNextWaitIndex,
                   omx_camera_source_component_Private->sMapbufQueue.nNextCaptureIndex );
 
       if(nBufferCountCur > 0 &&
           port->nIndexMapbufQueue == OMX_MAPBUFQUEUE_GETLASTBUFFER( omx_camera_source_component_Private->sMapbufQueue)) {
-        DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%ld] nBufferCountCur = %ld\n", __func__, nPortIndex, nBufferCountCur);
+        DEBUG(DEB_LEV_FULL_SEQ, "%s: port [%u] nBufferCountCur = %u\n", __func__, nPortIndex, nBufferCountCur);
         camera_ProcessPortOneBuffer( omx_camera_source_component_Private, (OMX_U32) nPortIndex );
 
         port->nIndexMapbufQueue = OMX_MAPBUFQUEUE_GETNEXTINDEX( omx_camera_source_component_Private->sMapbufQueue,
@@ -1605,7 +1614,7 @@ static OMX_ERRORTYPE camera_SendLastCapturedBuffer(omx_camera_source_component_P
 
   err = camera_UpdateCapturedBufferQueue( omx_camera_source_component_Private );
 
-  DEBUG(DEB_LEV_FULL_SEQ, "%s: After returning buffers, mapbuf queue index [last, wait, capture] = [%ld, %ld, %ld]\n", __func__,
+  DEBUG(DEB_LEV_FULL_SEQ, "%s: After returning buffers, mapbuf queue index [last, wait, capture] = [%u, %u, %u]\n", __func__,
               omx_camera_source_component_Private->sMapbufQueue.nLastBufIndex,
               omx_camera_source_component_Private->sMapbufQueue.nNextWaitIndex,
               omx_camera_source_component_Private->sMapbufQueue.nNextCaptureIndex );
@@ -1656,7 +1665,7 @@ static OMX_ERRORTYPE camera_ProcessPortOneBuffer(omx_camera_source_component_Pri
     tsem_down(port->pBufferSem);
     pBufHeader = dequeue(port->pBufferQueue);
     if(pBufHeader == NULL){
-      DEBUG(DEB_LEV_ERR, "%s: <ERROR> --Had NULL buffer from port [%ld]!!\n", __func__, nPortIndex);
+      DEBUG(DEB_LEV_ERR, "%s: <ERROR> --Had NULL buffer from port [%u]!!\n", __func__, nPortIndex);
       err = OMX_ErrorBadParameter;
       goto EXIT;
     }
@@ -1714,7 +1723,7 @@ static OMX_ERRORTYPE camera_ProcessPortOneBuffer(omx_camera_source_component_Pri
 
     /* Return buffer */
     pBufHeader->nFilledLen = omx_camera_source_component_Private->oFrameSize;
-    DEBUG(DEB_LEV_FULL_SEQ, "%s: return buffer [%ld] on port [%ld]: nFilledLen = %ld\n", __func__,
+    DEBUG(DEB_LEV_FULL_SEQ, "%s: return buffer [%u] on port [%u]: nFilledLen = %u\n", __func__,
                 port->nIndexMapbufQueue, nPortIndex, pBufHeader->nFilledLen);
     port->ReturnBufferFunction((omx_base_PortType *)port, pBufHeader);
   }
@@ -1777,8 +1786,8 @@ static OMX_ERRORTYPE camera_ReformatVideoFrame(
     goto EXIT;
   }
 
-  DEBUG(DEB_LEV_FULL_SEQ, "%s: src (width, height, color)=(%ld,%ld,%d)\n", __func__, nSrcFrameWidth, nSrcFrameHeight, eSrcOmxColorFormat);
-  DEBUG(DEB_LEV_FULL_SEQ, "%s: dst (width, height, stride, color)=(%ld,%ld,%ld,%d)\n", __func__, nDstFrameWidth, nDstFrameHeight, nDstFrameStride, eDstOmxColorFormat);
+  DEBUG(DEB_LEV_FULL_SEQ, "%s: src (width, height, color)=(%u,%u,%d)\n", __func__, nSrcFrameWidth, nSrcFrameHeight, eSrcOmxColorFormat);
+  DEBUG(DEB_LEV_FULL_SEQ, "%s: dst (width, height, stride, color)=(%u,%u,%u,%d)\n", __func__, nDstFrameWidth, nDstFrameHeight, nDstFrameStride, eDstOmxColorFormat);
 
   /* Now the camera does not support color conversion and frame resize;
      To do this job, Pls resort to a color conversion component */
@@ -1920,7 +1929,7 @@ static OMX_ERRORTYPE camera_HandleThumbnailCapture(omx_camera_source_component_P
 
     /* Return buffer */
     pBufHeader->nFilledLen = omx_camera_source_component_Private->oFrameSize;
-    DEBUG(DEB_LEV_FULL_SEQ, "%s: return buffer [%ld] on thumbnail port: nFilledLen = %ld\n", __func__,
+    DEBUG(DEB_LEV_FULL_SEQ, "%s: return buffer [%u] on thumbnail port: nFilledLen = %u\n", __func__,
                 pThumbnailPort->nIndexMapbufQueue, pBufHeader->nFilledLen);
     pThumbnailPort->ReturnBufferFunction((omx_base_PortType *)pThumbnailPort, pBufHeader);
   }
@@ -1992,9 +2001,9 @@ static int camera_init_mmap(omx_camera_source_component_PrivateType* omx_camera_
       return OMX_ErrorHardware;
     }
 
-    DEBUG(DEB_LEV_PARAMS, "i=%d,addr=%x,length=%d\n",(int)i,
-      (int)omx_camera_source_component_Private->sMapbufQueue.buffers[i].pCapAddrStart,
-      (int)omx_camera_source_component_Private->sMapbufQueue.buffers[i].length);
+    DEBUG(DEB_LEV_PARAMS, "i=%u,addr=%p,length=%u\n",i,
+      omx_camera_source_component_Private->sMapbufQueue.buffers[i].pCapAddrStart,
+      omx_camera_source_component_Private->sMapbufQueue.buffers[i].length);
   }
 
   return OMX_ErrorNone;
