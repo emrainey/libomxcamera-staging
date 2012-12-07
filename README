@@ -1,9 +1,19 @@
 The OpenMAX Motorola Camera component.
+    With Updates from Texas Instruments.
 
 To compile the component execute:
 
-autoreconf -i -f
-./configure --prefix=$INSTALL_DIR_PATH
-make
-make install
+$ autoreconf -i -f
+$ ./configure --prefix=$INSTALL_DIR_PATH
+$ make
+$ make install
+
+If you want to install in $HOME/omx
+
+$ autoreconf -i -f
+$ CFLAGS=-I$HOME/omx/include LDFLAGS=-L$HOME/omx/lib ./configure
+--prefix=$HOME/omx
+$ make 
+$ make install
+
 
